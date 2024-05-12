@@ -1,10 +1,3 @@
-; Jump not zero
-@macro
-JNZ(reg loc):
-    JZ reg _not_loc
-    JMP loc
-    DEF _not_loc
-
 main:
 	; Initialize A to 3. Because of how the logic is set up to check A-(B+1) = 0 later, we don't check 2. 
 	MW A 3
@@ -15,56 +8,51 @@ main:
 	; Start of the outer loop. A will be incremented by 1 every time we return here
 	DEF _num_loop
 
-	; B is the checkee, it's the number we try to divide with
-	MW B 2
-	; L counts how many numbers could evenly divide
-	MW L 0
+		; B is the checkee, it's the number we try to divide with
+		MW B 2
 
-	; Inner loop, go through all numbers between 2 and A-1, and see if they're evenly divisible
-	DEF _checkee_loop
+		; Inner loop, go through all numbers between 2 and A-1, and see if they're evenly divisible
+		DEF _checkee_loop
 
-	; division starts here
-	; Move A into H for temporary working
-	MW H A
-	
-	DEF _division_loop
-	; Subtract until we overflow, which is the same thing as subtracting till we underflow because two complement shenanigans
-	SUB H B
-	JO _division_loop
+			; division starts here
+			; Move A into H for temporary working
+			MW H A
+			
+			DEF _division_loop
+				; Subtract until we overflow, which is the same thing as subtracting till we underflow because two complement shenanigans
+				SUB H B
+			JO _division_loop
 
-	; Add H back, to turn H back into the remainder before it went negative
-	ADD H B
+			; Add H back, to turn H back into the remainder before it went negative
+			ADD H B
 
-	; Increment if has divisor
-	JNZ H _pass_increment
-	ADD L 1
-	DEF _pass_increment
-	; division ends here
+			; If we have an even divisor, increment A and return to the main loop
+			JZ H _increment
 
-	; Move B into H for temporary working
-	MW H A
-	; Subtract (B+1), if A = (B+1) it's 0 and we pass, so we exit before B equals A
-	SUB H B
-	SUB H 1
-	JZ H _pass_checkee_loop
-	
-	; Loop again
-	ADD B 1
-	JMP _checkee_loop
+			; division ends here
 
-	DEF _pass_checkee_loop
+			; Move B into H for temporary working
+			MW H A
+			; Subtract (B+1), if A = (B+1) it's 0 and we pass, so we exit before B equals A
+			SUB H B
+			SUB H 1
+			JZ H _pass_checkee_loop
+			
+			; Loop again
+			ADD B 1
+		JMP _checkee_loop
 
-	; Print A if L is 0, which means we had 0 even divisors
-   	JNZ L _pass_print
-    OUT A
-    DEF _pass_print
+		DEF _pass_checkee_loop
 
-	ADD A 1
+		; Print A if we reached this point, since we would've left earlier otherwise
+		OUT A
 
-	JO _gtfo
+		DEF _increment
+		ADD A 1
 
+		; If we overflowed, leave the program
+		JO _gtfo
 	JMP _num_loop
-
 	DEF _gtfo
 
     HLT
@@ -72,4 +60,4 @@ main:
 ; A - NUM TO CHECK
 ; B - CHECKEE
 ; H - GENERIC FOR MAFFS
-; L - COUNTS DIVISORS
+; L - Unused
